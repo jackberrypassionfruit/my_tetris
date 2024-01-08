@@ -1,7 +1,6 @@
-import sys, math
-import time
+import sys, curses, time
 
-class FallingRocks():
+class MyTetris():
   def __init__(self):
     with open(sys.argv[1], 'r', encoding='utf8') as infile:
       jet_push_text = infile.read()
@@ -41,32 +40,33 @@ class FallingRocks():
 .......\
 '''.split('\n')
 
-    self.block_carcasses = set() # set({ (2,0), (3,0), (4,0), (5,0) })
-    # testing
-    # self.max_height = 1
-    # self.current_loc = [2,8]
+    self.block_carcasses = set()
     
   def __repr__(self):
     result = ''
     for line_index, line in enumerate(self.feeld):
       block_row = line_index - self.current_loc[1]
-      # if self.current_loc == [0,0], then yet to drop a new block
+      # if self.current_loc == [-1,-1], then yet to drop a new block
       if self.current_loc != [-1, -1] and 0 <= block_row < len(self.blocks[self.block_index]):
         block_line = ''
-        for col_index in range(7):
+        for col_index, col in enumerate(self.feeld[0]):
           block_col = col_index - self.current_loc[0]
           if self.current_loc[0] <= col_index < self.current_loc[0] + len(self.blocks[self.block_index][block_row]):
-            block_line += self.blocks[self.block_index][block_row][block_col]
+            block_row_col = self.blocks[self.block_index][block_row][block_col]
+            if block_row_col == '@':
+              block_line += block_row_col
+            else:
+              block_line += line[col_index]
           else:
             block_line += line[col_index]
-        result += f'{block_line}\n'
+        result += f'{block_line}\n\r'
       else:
-        result += f'{line}\n'
+        result += f'{line}\n\r'
           
           
           
     # return result
-    return '\n'.join(reversed(result.split('\n'))) # (Un)Flip the image upside down
+    return '\n\r'.join(reversed(result.split('\n\r'))) # (Un)Flip the image upside down
   
   def get_current_block_coords(self):  
     block_coords = set()
@@ -117,41 +117,64 @@ class FallingRocks():
           self.current_loc[0] += 1
         
   
-  def block_fall_down(self):
+  def block_fall_down(self, play_game):
+    dir = None
     while self.current_loc != [-1, -1]:
       # move left or right, depending on wind instruction
-      
-      dir = self.hot_gas_movement[self.hot_gas_index]
-      if not self.check_if_will_collide(dir):
+      if dir is not '^':
+        if play_game:
+          dir = None
+          while not dir:
+            match curses.initscr().getkey():
+              case 'a':
+                dir = '<'
+              case 's':
+                dir = 'V'
+              case 'd':
+                dir = '>'
+              case 'w':
+                dir = '^'
+              case _:
+                pass
+        else:
+          dir = self.hot_gas_movement[self.hot_gas_index]
+          self.hot_gas_index = (self.hot_gas_index + 1) % len(self.hot_gas_movement)
+      if not self.check_if_will_collide(dir) and dir in ['<', '>']:
         self.hot_gas(dir)
-      self.hot_gas_index = (self.hot_gas_index + 1) % len(self.hot_gas_movement)
-      print('\n'*30)
-      print(self)
-      print('self.current_loc: ', self.current_loc)
+      # print('\n'*30)
+      # print(self)
+      # print('self.current_loc: ', self.current_loc)
       # print('dir: ', dir)
       # print('self.hot_gas_index: ', self.hot_gas_index)
-      time.sleep(.25)
+      # time.sleep(.25)
       
       if self.current_loc[1] == 0 or self.check_if_will_collide('V'):
         self.max_height = self.stop_block()
       else:
         self.current_loc[1] -= 1
-      print('\n'*30)
+      print('\n\r'*30)
       print(self)
       print('self.current_loc: ', self.current_loc)
-      # print('self.hot_gas_index: ', self.hot_gas_index)
-      time.sleep(.25)
+      if not play_game:
+        time.sleep(.25)
       
-  def release_block(self):
+  def release_block(self, play_game = False):
     current_block_height = len(self.blocks[self.block_index])
     self.feeld += ['.......'] * (current_block_height)
     self.current_loc = [2, self.max_height + 4]
-    self.block_fall_down()
-    
+    self.block_fall_down(play_game=play_game)    
     
   def release_the_blocks(self):
     for i in range(2022):
       self.block_index = i % len(self.blocks)
       
-      self.release_block()
+      self.release_block(play_game = False)
     print('max_height: ', self.max_height)
+    
+    
+  def play_game(self):
+    i = 0
+    while True:
+      self.block_index = i % len(self.blocks)
+      self.release_block(play_game = True)
+      i += 1

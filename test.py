@@ -1,17 +1,47 @@
-from pyroclastic_flow import FallingRocks
+from my_tetris import MyTetris
 
-falling_rocks = FallingRocks()
-# falling_rocks.stop_block()
-# print(falling_rocks)
+falling_rocks = MyTetris()
 
-# if falling_rocks.check_if_will_collide():
-#   print('will collide')
-# else:
-#   print('will not collide')
-# print(len(falling_rocks.hot_gas_movement))
-falling_rocks.release_the_blocks()
+# falling_rocks.release_the_blocks()
+falling_rocks.play_game()
 
 
-# import curses
-# char = curses.initscr().getch()
-# print('\nchar: ', char)
+# block = [ 
+#         '@',
+#         '@',
+#         '@',
+#         '@'
+#       ]
+
+# block_90 = []
+# for col_index in range(len(block[0])):
+#   new_row = ''.join([row[col_index] for row in block[::-1]])
+#   block_90.append(new_row)
+
+
+# for row in block:
+#   print(row)
+# print()
+
+# block = [ ''.join([ row[col_index] for row in block[::-1] ]) for col_index in range(len(block[0])) ]
+
+# for row in block:
+#   print(row)
+# print()
+  
+# block = [ ''.join([ row[col_index] for row in block ]) for col_index in range(len(block[0]))[::-1] ]
+# block = [ ''.join([ row[col_index] for row in block ]) for col_index in range(len(block[0]))[::-1] ]
+
+
+# for row in block:
+#   print(row)
+# print()
+
+# """
+# TODO
+# 1. implement rotation controls
+# 2. solved curses problem in the console after running this script
+#   - the /r (carriage return) symbol is not applied correctly after running "curses.initscr().getkey()"
+# 3. add a win/lose condition
+#   - clear lines when full
+# """
