@@ -116,7 +116,10 @@ class MyTetris():
         if coord_right < len(self.feeld[0]):
           self.current_loc[0] += 1
         
-  
+  def rotate_block(self, block, clock_wise=True):
+    clock_wise = 1 if clock_wise else -1
+    return [ ''.join([ row[col_index] for row in block[::-1*clock_wise] ]) for col_index in range(len(block[0]))[::clock_wise] ]
+
   def block_fall_down(self, play_game):
     dir = None
     while self.current_loc != [-1, -1]:

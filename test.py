@@ -1,41 +1,42 @@
-from my_tetris import MyTetris
+# from my_tetris import MyTetris
 
-falling_rocks = MyTetris()
+# falling_rocks = MyTetris()
 
 # falling_rocks.release_the_blocks()
-falling_rocks.play_game()
+# falling_rocks.play_game()
 
-
-# block = [ 
-#         '@',
-#         '@',
-#         '@',
-#         '@'
-#       ]
 
 # block_90 = []
 # for col_index in range(len(block[0])):
 #   new_row = ''.join([row[col_index] for row in block[::-1]])
 #   block_90.append(new_row)
 
+def rotate_block(block, clock_wise=True):
+  clock_wise = 1 if clock_wise else -1
+  return [ ''.join([ row[col_index] for row in block[::-1*clock_wise] ]) for col_index in range(len(block[0]))[::clock_wise] ]
 
-# for row in block:
-#   print(row)
-# print()
+block = [
+        '@@@',
+        '..@',
+        '..@'
+      ]
 
-# block = [ ''.join([ row[col_index] for row in block[::-1] ]) for col_index in range(len(block[0])) ]
+for row in block:
+  print(row)
+print()
 
-# for row in block:
-#   print(row)
-# print()
+block = rotate_block(block, clock_wise=True)
+
+for row in block:
+  print(row)
+print()
   
-# block = [ ''.join([ row[col_index] for row in block ]) for col_index in range(len(block[0]))[::-1] ]
-# block = [ ''.join([ row[col_index] for row in block ]) for col_index in range(len(block[0]))[::-1] ]
+block = rotate_block(block, clock_wise=False)
+block = rotate_block(block, clock_wise=False)
 
-
-# for row in block:
-#   print(row)
-# print()
+for row in block:
+  print(row)
+print()
 
 # """
 # TODO
