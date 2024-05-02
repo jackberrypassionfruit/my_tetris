@@ -1,4 +1,4 @@
-import sys, curses, time
+import sys, time, curses
 
 class MyTetris():
   def __init__(self):
