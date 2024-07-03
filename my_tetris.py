@@ -5,10 +5,6 @@ class MyTetris():
     self.board_width = 10
     self.board_height = 20
     
-    
-    with open(sys.argv[1], 'r', encoding='utf8') as infile:
-      jet_push_text = infile.read()
-    self.hot_gas_movement = list(''.join(jet_push_text.split('\n')))
     self.max_height = -1
     self.blocks = [
       ['@@@@'],
@@ -144,31 +140,27 @@ class MyTetris():
     while self.current_loc != [-1, -1]:
       # move left or right, depending on wind instruction
       if dir != '^':
-        if play_game:
-          dir = None
-          while not dir:
-            match curses.initscr().getkey():
-              case 'a':
-                dir = '<'
-              case 's':
-                dir = 'V'
-              case 'd':
-                dir = '>'
-              case 'w':
-                dir = '^'
-              case 'q':
-                self.current_block = self.rotate_block(self.current_block, clock_wise=False)
-                print(self)
-                print(f'self.current_loc: {self.current_loc}\r')
-              case 'e':
-                self.current_block = self.rotate_block(self.current_block, clock_wise=True)
-                print(self)
-                print(f'self.current_loc: {self.current_loc}\r')
-              case _:
-                pass
-        else:
-          dir = self.hot_gas_movement[self.hot_gas_index]
-          self.hot_gas_index = (self.hot_gas_index + 1) % len(self.hot_gas_movement)
+        dir = None
+        while not dir:
+          match curses.initscr().getkey():
+            case 'a':
+              dir = '<'
+            case 's':
+              dir = 'V'
+            case 'd':
+              dir = '>'
+            case 'w':
+              dir = '^'
+            case 'q':
+              self.current_block = self.rotate_block(self.current_block, clock_wise=False)
+              print(self)
+              print(f'self.current_loc: {self.current_loc}\r')
+            case 'e':
+              self.current_block = self.rotate_block(self.current_block, clock_wise=True)
+              print(self)
+              print(f'self.current_loc: {self.current_loc}\r')
+            case _:
+              pass
       if not self.check_if_will_collide(dir) and dir in ['<', '>']:
         self.hot_gas(dir)      
       if self.current_loc[1] == 0 or self.check_if_will_collide('V'):

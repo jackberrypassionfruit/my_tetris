@@ -3,7 +3,6 @@ import curses
 
 falling_rocks = MyTetris()
 
-# falling_rocks.release_the_blocks()
 try:
   falling_rocks.play_game()
 except Exception as e:
