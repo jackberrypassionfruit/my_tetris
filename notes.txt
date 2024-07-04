@@ -1,7 +1,7 @@
 
 TODO
 
-1. implement rotation controls
+1. DONE (everyting is a carcass)- implement rotation controls
   - does not occur about center, which is awkward
     * fixed this by adding whitespace to blocks so their central axes are evenly spaced
     * now, need to make sure blocks end when they COLLIDE with bottom/sides, not when coord_y is there
