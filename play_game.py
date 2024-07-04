@@ -14,10 +14,10 @@ falling_rocks = MyTetris()
 #   print(line)
 
 # sys.exit()
-try:
-  falling_rocks.play_game()
-except Exception as e:
-  curses.endwin()
-  print(e)
-except:
-  curses.endwin()
+# try:
+falling_rocks.play_game()
+# except Exception as e:
+#   curses.endwin()
+#   print(e)
+# except:
+#   curses.endwin()

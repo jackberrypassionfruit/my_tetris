@@ -10,7 +10,7 @@ TODO
   - can put blocks out of the left/right bounds, which is incorrect
 
 
-2. Add a move timer
+2. Add a move timer (DONE)
   - This is tricky, I have to implenent the crux of pygame via threads, most likely
   - Hopefully python lets me create two threads that can modify the same class object at once
 

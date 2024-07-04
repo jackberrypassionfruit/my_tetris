@@ -1,10 +1,13 @@
-import sys, time, curses, time, threading
+import sys, os, time, curses, time, threading, random
 
 class MyTetris():
   def __init__(self):
     self.board_width = 10
     self.board_height = 20
     self.game_over = False
+    self.cleared_rows = 0
+    self.max_cleared_rows = 100
+    self.game_step_interval = 1
     
     self.blocks = [
       [
@@ -29,15 +32,18 @@ class MyTetris():
         '.@@',
       ]
     ]
+    self.next_block = random.choice(self.blocks)
+
+    
     self.block_index = 0
     self.feeld = ['.' * self.board_width for i in range(self.board_height)]
 
     # Add walls and ground to carcasses. Those will be the bounds
     floor_carcasses = set([(x, -1) for x in range(self.board_width)])
     self.block_carcasses = floor_carcasses
-    left_wall_carcasses =  set([(-1,               y) for y in range(100)]) # make it big just so we don't run out..
+    left_wall_carcasses =  set([(-1,               y) for y in range(self.max_cleared_rows)]) # make it big just so we don't run out..
     self.block_carcasses = self.block_carcasses.union(left_wall_carcasses)
-    right_wall_carcasses = set([(self.board_width, y) for y in range(100)]) # clear too many...congrats you won!
+    right_wall_carcasses = set([(self.board_width, y) for y in range(self.max_cleared_rows)]) # clear too many...congrats you won!
     self.block_carcasses = self.block_carcasses.union(right_wall_carcasses)
     
   def __repr__(self):
@@ -62,7 +68,12 @@ class MyTetris():
       else:
         result += f'{line}\n\r'
         
-          
+    print(f'Cleared Rows: {self.cleared_rows}', end='\n\r\n\r')    
+    
+    print('Next Block:\r')
+    for row in self.next_block[::-1]:
+      print(f"{row}", end='\n\r')
+      
           
     # return result # Image not flipped
     return '\n\r'.join(reversed(result.split('\n\r')))+'\n\r' # (Un)Flip the image upside down
@@ -109,6 +120,8 @@ class MyTetris():
           for carcass in carcasses_above_this_row:
             self.block_carcasses.remove(carcass)
             self.block_carcasses.update([(carcass[0], carcass[1]-1)])
+            
+          self.cleared_rows += 1
           found_row_to_remove = True
           break # out of for loop
       
@@ -116,6 +129,9 @@ class MyTetris():
     ''' 
     This method takes the current state of the block, and turns it into block carcasses
     '''
+    self.block_index += 1
+    self.game_step_interval -= 0.01
+    
     block_coords = self.get_block_coords(block=self.current_block)
     for coord_x, coord_y in block_coords:
       self.feeld[coord_y] = self.feeld[coord_y][:coord_x] + '#' + self.feeld[coord_y][coord_x+1:]
@@ -123,17 +139,18 @@ class MyTetris():
     self.current_loc = [-1,-1]
     self.remove_full_rows()
 
-  def reset_block(self):
-    self.block_index += 1
-    this_block_index = self.block_index % len(self.blocks)
-    self.current_block = self.blocks[this_block_index]
+  def reset_block(self):    
+    self.current_block = self.next_block
     current_block_height = len(self.current_block)
     self.current_loc = [self.board_width//2, self.board_height - current_block_height]
+    
+    block_choices = self.blocks[:]
+    block_choices.remove(self.current_block)
+    self.next_block = random.choice(block_choices)
         
   def rotate_block(self, block, clock_wise=True):
-    clock_wise = -1 if clock_wise else 1
-    # Holy Shit
-    return [ ''.join([ row[col_index] for row in block[::-1*clock_wise] ]) for col_index in range(len(block[0]))[::clock_wise] ]
+    clock_wise = 1 if clock_wise else -1
+    return [ ''.join([ row[col_index] for row in block[::clock_wise] ]) for col_index in range(len(block[0]))[::-1*clock_wise] ]
 
   def release_new_block(self):
     self.reset_block()
@@ -145,11 +162,11 @@ class MyTetris():
         while not dir:
           key_press = curses.initscr().getkey()
           match key_press:
-            case 'a':
+            case 'a' | curses.KEY_LEFT:
               dir = '<'
             case 's':
               dir = 'V'
-            case 'd':
+            case 'd' | curses.KEY_RIGHT:
               dir = '>'
             case 'w':
               dir = '^'
@@ -160,10 +177,8 @@ class MyTetris():
               if not rotated_block_coords.intersection(self.block_carcasses):
                 self.current_block = rotated_block
               print(self)
-              print(f'self.current_loc: {self.current_loc}\r')
             case _:
               pass
-            
       
       if dir in ['<', '>'] and not self.check_if_will_collide(dir):
         match dir:
@@ -179,29 +194,54 @@ class MyTetris():
         self.current_loc[1] -= 1
               
       print(self)
-      print(f'self.current_loc: {self.current_loc}\r')
     
   def game_timer(self):
-    try:
-      while self.game_over == False:
-        time.sleep(1)
-        if self.check_if_will_collide('V'):          
-          self.stop_block() # each second it's trying to stop the block, again and again. It does'nt know to start over
-          self.reset_block()
-          
-        else:
-          self.current_loc[1] -= 1
-        print(self)
-        print(f'self.current_loc: {self.current_loc}\r')
-    except Exception as e:
-      print(e)
+    while self.game_over == False:
+      time.sleep(self.game_step_interval)
+      if self.check_if_will_collide('V'):          
+        self.stop_block()
+        self.reset_block()
+        
+      else:
+        self.current_loc[1] -= 1
+      print(self)
     
   def play_game(self):
-    threading.Thread(target=self.game_timer).start()
-        
-    while self.block_index < 100:
-      self.release_new_block()
+    
+    print('''\
+Controls:
+          
+Rotate:
+  Counterclockwise:   Q
+  Clockwise:          E
+
+Left/Right:           A/D
+Slam to Bottom:       W
+Move Down by One(1):  S
+
+To Quit:              Ctrl + C
+''')
+    input('Ready to start? Hit ENTER:\n')
+    
+    threading.Thread(target=self.game_timer, daemon=True).start() # daemon=True makes it so thread quits when program does
+    
+    try:
+      while self.block_index < self.max_cleared_rows:
+        self.release_new_block()
+    except Exception as e:
+      curses.endwin()
+      print(e)
+      sys.exit()
+    except KeyboardInterrupt:
+      curses.endwin()
+      sys.exit()
       
-    print('Woah, somebody actually won.\r')
+    print('Woah, somebody actually won.', end='\n\r')
     input('Click any button to quit')
     sys.exit()
+    
+    
+if __name__ == "__main__":
+  falling_rocks = MyTetris()
+  
+  falling_rocks.play_game()
