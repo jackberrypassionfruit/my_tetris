@@ -61,7 +61,7 @@ class MyTetris():
         result += f'{block_line}\n\r'
       else:
         result += f'{line}\n\r'
-          
+        
           
           
     # return result # Image not flipped
@@ -128,7 +128,12 @@ class MyTetris():
     # Holy Shit
     return [ ''.join([ row[col_index] for row in block[::-1*clock_wise] ]) for col_index in range(len(block[0]))[::clock_wise] ]
 
-  def block_fall_down(self):
+  def release_new_block(self):
+    this_block_index = self.block_index % len(self.blocks)
+    self.current_block = self.blocks[this_block_index]
+    current_block_height = len(self.current_block)
+    self.current_loc = [self.board_width//2, self.board_height - current_block_height]
+    
     dir = None
     while self.current_loc != [-1, -1]:
       if dir != '^':
@@ -151,6 +156,7 @@ class MyTetris():
               if not rotated_block_coords.intersection(self.block_carcasses):
                 self.current_block = rotated_block
               print(self)
+              print(f'self.current_loc: {self.current_loc}\r')
             case _:
               pass
             
@@ -164,6 +170,8 @@ class MyTetris():
       
       if self.check_if_will_collide('V'):
         self.stop_block()
+        self.block_index += 1
+        self.release_new_block()
       
       else:
         self.current_loc[1] -= 1
@@ -190,21 +198,21 @@ class MyTetris():
               
       print(self)
       print(f'self.current_loc: {self.current_loc}\r')
-      
-  def release_block(self):
-    current_block_height = len(self.current_block)
-    self.current_loc = [self.board_width//2, self.board_height - current_block_height]
-    self.block_fall_down()
     
   def game_timer(self):
     try:
       while self.game_over == False:
         time.sleep(1)
         if self.check_if_will_collide('V'):
-          self.stop_block()
+          # pass
           
-          self.block_index = self.block_index % len(self.blocks)
-          self.current_block = self.blocks[self.block_index]
+          self.stop_block() # each second it's trying to stop the block, again and again. It does'nt know to start over
+          this_block_index = self.block_index % len(self.blocks)
+          self.current_block = self.blocks[this_block_index]
+          current_block_height = len(self.current_block)
+          self.current_loc = [self.board_width//2, self.board_height - current_block_height]
+    
+          # self.release_new_block()
         else:
           self.current_loc[1] -= 1
         print(self)
@@ -215,11 +223,11 @@ class MyTetris():
   def play_game(self):
     threading.Thread(target=self.game_timer).start()
     
-    while self.block_index < 100:
-      self.block_index = self.block_index % len(self.blocks)
-      self.current_block = self.blocks[self.block_index]
-      self.release_block()
-      self.block_index += 1
+    # self.game_timer()
+    
+    # while self.block_index < 100:
+    #   self.release_new_block()
+    self.release_new_block()
       
     print('Woah, somebody actually won.\r')
     input('Click any button to quit')
