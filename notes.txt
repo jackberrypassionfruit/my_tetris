@@ -1,1 +1,17 @@
-3068 is too high
+
+TODO
+
+1. implement rotation controls
+  - does not occur about center, which is awkward
+    * fixed this by adding whitespace to blocks so their central axis is evenly spaced
+    * now, need to make sure blocks end when they COLLIDE with bottom, not when coord_y is 0
+    * This likely means adding ground to carcasses, fittingly
+  
+  - can put blocks out of the right bounds, which is incorrect
+
+
+2. Add a move timer
+  - This is tricky, I have to implenent the crux of pygame via threads, most likely
+  - Hopefully python lets me create two threads that can modify the same class object at once
+
+3. Add a win/lose condition

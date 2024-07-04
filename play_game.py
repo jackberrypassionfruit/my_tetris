@@ -1,8 +1,19 @@
 from my_tetris import MyTetris
-import curses
+import curses, sys
 
 falling_rocks = MyTetris()
 
+# block = falling_rocks.blocks[0]
+# for line in block:
+#   print(line)
+
+# print()
+# rotated_block = falling_rocks.rotate_block(block)
+
+# for line in rotated_block:
+#   print(line)
+
+# sys.exit()
 try:
   falling_rocks.play_game()
 except Exception as e:
@@ -10,17 +21,3 @@ except Exception as e:
   print(e)
 except:
   curses.endwin()
-
-
-# """
-# TODO
-# 1. implement rotation controls
-#   - does not occur about center, which is awkward
-#   - can put blocks out of the right bounds, which is incorrect
-# 2. add a win/lose condition
-# """
-
-# block_90 = []
-# for col_index in range(len(block[0])):
-#   new_row = ''.join([row[col_index] for row in block[::-1]])
-#   block_90.append(new_row)
