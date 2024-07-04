@@ -1,9 +1,10 @@
-import sys, time, curses
+import sys, time, curses, time, threading
 
 class MyTetris():
   def __init__(self):
     self.board_width = 10
     self.board_height = 20
+    self.game_over = False
     
     self.blocks = [
       [
@@ -28,7 +29,7 @@ class MyTetris():
         '.@@',
       ]
     ]
-    
+    self.block_index = 0
     self.feeld = ['.' * self.board_width for i in range(self.board_height)]
 
     # Add walls and ground to carcasses. Those will be the bounds
@@ -120,6 +121,7 @@ class MyTetris():
       self.feeld[coord_y] = self.feeld[coord_y][:coord_x] + '#' + self.feeld[coord_y][coord_x+1:]
     self.block_carcasses.update(block_coords)
     self.current_loc = [-1,-1]
+    self.remove_full_rows()
         
   def rotate_block(self, block, clock_wise=True):
     clock_wise = -1 if clock_wise else 1
@@ -149,41 +151,75 @@ class MyTetris():
               if not rotated_block_coords.intersection(self.block_carcasses):
                 self.current_block = rotated_block
               print(self)
-              print(f'self.current_loc: {self.current_loc}\r')
             case _:
               pass
             
       
-      if dir in ['<', '>']:
-        if not self.check_if_will_collide(dir):
-          match dir:
-            case '<':
-              self.current_loc[0] -= 1
-            case '>':
-              self.current_loc[0] += 1
+      if dir in ['<', '>'] and not self.check_if_will_collide(dir):
+        match dir:
+          case '<':
+            self.current_loc[0] -= 1
+          case '>':
+            self.current_loc[0] += 1
       
       if self.check_if_will_collide('V'):
         self.stop_block()
-        self.remove_full_rows()
       
       else:
         self.current_loc[1] -= 1
+        
+        
+      
+      # if self.check_if_will_collide('V'):
+      #   self.stop_block()
+      #   self.remove_full_rows()
+      
+      # if dir in ['<', '>', 'V'] and not self.check_if_will_collide(dir):
+      #   if dir in ['<', '>']:
+      #     match dir:
+      #       case '<':
+      #         self.current_loc[0] -= 1
+      #       case '>':
+      #         self.current_loc[0] += 1
+      #   elif dir == 'V':
+      #     self.current_loc[1] -= 1
+      
+      # else:
+      #   self.current_loc[1] -= 1
+              
               
       print(self)
-      # print(f'self.current_loc: {self.current_loc}\r')
+      print(f'self.current_loc: {self.current_loc}\r')
       
   def release_block(self):
     current_block_height = len(self.current_block)
     self.current_loc = [self.board_width//2, self.board_height - current_block_height]
-    self.block_fall_down()    
+    self.block_fall_down()
+    
+  def game_timer(self):
+    try:
+      while self.game_over == False:
+        time.sleep(1)
+        if self.check_if_will_collide('V'):
+          self.stop_block()
+          
+          self.block_index = self.block_index % len(self.blocks)
+          self.current_block = self.blocks[self.block_index]
+        else:
+          self.current_loc[1] -= 1
+        print(self)
+        print(f'self.current_loc: {self.current_loc}\r')
+    except Exception as e:
+      print(e)
     
   def play_game(self):
-    i = 0
-    while i < 100:
-      self.block_index = i % len(self.blocks)
+    threading.Thread(target=self.game_timer).start()
+    
+    while self.block_index < 100:
+      self.block_index = self.block_index % len(self.blocks)
       self.current_block = self.blocks[self.block_index]
       self.release_block()
-      i += 1
+      self.block_index += 1
       
     print('Woah, somebody actually won.\r')
     input('Click any button to quit')
