@@ -3,11 +3,11 @@ TODO
 
 1. implement rotation controls
   - does not occur about center, which is awkward
-    * fixed this by adding whitespace to blocks so their central axis is evenly spaced
-    * now, need to make sure blocks end when they COLLIDE with bottom, not when coord_y is 0
-    * This likely means adding ground to carcasses, fittingly
+    * fixed this by adding whitespace to blocks so their central axes are evenly spaced
+    * now, need to make sure blocks end when they COLLIDE with bottom/sides, not when coord_y is there
+    * This could mean adding ground/walls to carcasses, fittingly
   
-  - can put blocks out of the right bounds, which is incorrect
+  - can put blocks out of the left/right bounds, which is incorrect
 
 
 2. Add a move timer

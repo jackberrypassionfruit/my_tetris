@@ -8,9 +8,11 @@ class MyTetris():
     self.max_height = -1
     self.blocks = [
       [
-        '....',
-        '@@@@'
-        '....',
+        '.....',
+        '.....',
+        '@@@@@',
+        '.....',
+        '.....'
       ],
       [
         '...',
@@ -48,7 +50,14 @@ class MyTetris():
     
     self.hot_gas_index = 0
     self.feeld = ['.'*self.board_width for i in range(self.board_height)]
-    self.block_carcasses = set()
+    # self.block_carcasses = set()
+    # instead, add walls and ground to carcasses
+    floor_carcasses = set([(x, -1) for x in range(self.board_width)])
+    self.block_carcasses = floor_carcasses
+    left_wall_carcasses =  set([(-1,               y) for y in range(100)])
+    self.block_carcasses = self.block_carcasses.union(left_wall_carcasses)
+    right_wall_carcasses = set([(self.board_width, y) for y in range(100)])
+    self.block_carcasses = self.block_carcasses.union(right_wall_carcasses)
     
   def __repr__(self):
     print('\n\r'*(self.board_height+10))
@@ -77,9 +86,9 @@ class MyTetris():
     # return result # Image not flipped
     return '\n\r'.join(reversed(result.split('\n\r')))+'\n\r' # (Un)Flip the image upside down
   
-  def get_current_block_coords(self):  
+  def get_block_coords(self, block=None):  
     block_coords = set()
-    for block_row_index, block_row in enumerate(self.current_block):
+    for block_row_index, block_row in enumerate(block):
       for block_col_index, block_col in enumerate(block_row):
         if block_col != '.':
           new_block_spot_x, new_block_spot_y = self.current_loc
@@ -90,7 +99,7 @@ class MyTetris():
     
   def check_if_will_collide(self, dir):
     potential_collisions = set()
-    current_block_coords = self.get_current_block_coords()
+    current_block_coords = self.get_block_coords(block=self.current_block)
     for block_spot in current_block_coords:
       collision_spot_x, collision_spot_y = block_spot
       match dir:
@@ -104,26 +113,27 @@ class MyTetris():
     return potential_collisions.intersection(self.block_carcasses)
   
   def remove_full_rows(self):
-    rows_to_remove = []
-    for row_index, row in enumerate(self.feeld):
-      if '.' not in row:          
-        rows_to_remove.append(row_index)
-      
-    for row_index in rows_to_remove:
-      self.feeld = self.feeld[:row_index] + self.feeld[row_index + 1:] + ['.'*self.board_width]
-      
-      carcasses_in_this_row = [coord for coord in self.block_carcasses if coord[1] == row_index]
-      for carcass in carcasses_in_this_row:
-        self.block_carcasses.remove(carcass)
+    found_row_to_remove = True
+    while found_row_to_remove:
+      found_row_to_remove = False
+      for row_index, row in enumerate(self.feeld):
+        if '.' not in row:
+          self.feeld = self.feeld[:row_index] + self.feeld[row_index + 1:] + ['.'*self.board_width]
         
-      carcasses_above_this_row = [coord for coord in self.block_carcasses if coord[1] > row_index]
-      for carcass in carcasses_above_this_row:
-        self.block_carcasses.remove(carcass)
-        self.block_carcasses.update([(carcass[0], carcass[1]-1)])
-  
+          carcasses_in_this_row = [coord for coord in self.block_carcasses if coord[1] == row_index and -1<coord[0]<self.board_width]
+          for carcass in carcasses_in_this_row:
+            self.block_carcasses.remove(carcass)
+          
+          carcasses_above_this_row = [coord for coord in self.block_carcasses if coord[1] > row_index and -1<coord[0]<self.board_width]
+          for carcass in carcasses_above_this_row:
+            self.block_carcasses.remove(carcass)
+            self.block_carcasses.update([(carcass[0], carcass[1]-1)])
+          found_row_to_remove = True
+          break # out of for loop
+      
   def stop_block(self):
     # This method takes the current state of the block, and turns it into block carcasses
-    block_coords = self.get_current_block_coords()
+    block_coords = self.get_block_coords(block=self.current_block)
     for coords in block_coords:
       coord_x, coord_y = coords
       self.feeld[coord_y] = self.feeld[coord_y][:coord_x] + '#' + self.feeld[coord_y][coord_x+1:]
@@ -132,21 +142,10 @@ class MyTetris():
     self.remove_full_rows()
     # Return a value, max_height, which will be max(current_max_height, max_height_of_this_dead_block)
     return max(self.max_height, max([block_coord[1] for block_coord in block_coords]))
-  
-  def hot_gas(self, dir):
-    match dir:
-      case '<':
-        if self.current_loc[0] > 0:
-          self.current_loc[0] -= 1
-      case '>':
-        coord_right = self.current_loc[0] + len(self.current_block[0])
-        if coord_right < len(self.feeld[0]):
-          self.current_loc[0] += 1
         
   def rotate_block(self, block, clock_wise=True):
     clock_wise = -1 if clock_wise else 1
     # Holy Shit
-    # This is dope, but it doesn't rotate about center of shape
     return [ ''.join([ row[col_index] for row in block[::-1*clock_wise] ]) for col_index in range(len(block[0]))[::clock_wise] ]
 
   def block_fall_down(self):
@@ -156,7 +155,8 @@ class MyTetris():
       if dir != '^':
         dir = None
         while not dir:
-          match curses.initscr().getkey():
+          key_press = curses.initscr().getkey()
+          match key_press:
             case 'a':
               dir = '<'
             case 's':
@@ -168,26 +168,31 @@ class MyTetris():
               
               # TODO
               # First check if the rotated block collides with the wall, before setting self.current_block
-            case 'q':
-              self.current_block = self.rotate_block(self.current_block, clock_wise=False)
-              print(self)
-              print(f'self.current_loc: {self.current_loc}\r')
-            case 'e':
-              self.current_block = self.rotate_block(self.current_block, clock_wise=True)
+            case 'q' | 'e':
+              rotated_block = self.rotate_block(self.current_block, clock_wise = key_press=='e')
+              rotated_block_coords = self.get_block_coords(rotated_block)
+              if not rotated_block_coords.intersection(self.block_carcasses):
+                self.current_block = rotated_block
               print(self)
               print(f'self.current_loc: {self.current_loc}\r')
             case _:
               pass
             
-      if not self.check_if_will_collide(dir) and dir in ['<', '>']:
-        self.hot_gas(dir)      
-        
-      # TODO
-      # Add row below ground to carcasses, isntead of checking current_loc[1]
-      if self.current_loc[1] == 0 or self.check_if_will_collide('V'):
+      
+      if dir in ['<', '>']:
+        if not self.check_if_will_collide(dir):
+          match dir:
+            case '<':
+              self.current_loc[0] -= 1
+            case '>':
+              self.current_loc[0] += 1
+      
+      if self.check_if_will_collide('V'):
         self.max_height = self.stop_block()
+      
       else:
         self.current_loc[1] -= 1
+              
       print(self)
       print(f'self.current_loc: {self.current_loc}\r')
       
